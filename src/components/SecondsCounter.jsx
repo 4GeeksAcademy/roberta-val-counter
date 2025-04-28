@@ -20,3 +20,5 @@ SecondsCounter.propTypes = {
 };
 
 export default SecondsCounter;
+
+

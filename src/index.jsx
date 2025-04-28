@@ -1,39 +1,49 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import SecondsCounter from "./components/SecondsCounter.jsx";
 
+let timer = null;
+
 const App = () => {
   const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(true);
+  const [isRunning, setIsRunning] = useState(false);
   const [isCountdown, setIsCountdown] = useState(false);
-  const [target, setTarget] = useState(10);
-  const intervalRef = useRef(null);
 
-  useEffect(() => {
-    if (isRunning) {
-      intervalRef.current = setInterval(() => {
-        setSeconds((prev) =>
-          isCountdown ? Math.max(prev - 1, 0) : prev + 1
-        );
-      }, 1000);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [isRunning, isCountdown]);
+  const startCounter = () => {
+    if (timer) return; 
+    setIsRunning(true);
+    timer = setInterval(() => {
+      setSeconds(prev => {
+        if (isCountdown) {
+          if (prev === 0) {
+            clearInterval(timer);
+            timer = null;
+            alert("⏰ Countdown finished!");
+            setIsRunning(false);
+            return 0;
+          }
+          return prev - 1;
+        } else {
+          return prev + 1;
+        }
+      });
+    }, 1000);
+  };
 
-  useEffect(() => {
-    if (seconds === target) {
-      alert(`🎯 Reached target time: ${target} seconds`);
-    }
-  }, [seconds, target]);
-
-  const handleStart = () => setIsRunning(true);
-  const handleStop = () => setIsRunning(false);
-  const handleReset = () => {
+  const stopCounter = () => {
+    clearInterval(timer);
+    timer = null;
     setIsRunning(false);
+  };
+
+  const resetCounter = () => {
+    stopCounter();
     setSeconds(isCountdown ? 60 : 0);
   };
+
   const toggleMode = () => {
+    stopCounter();
     setIsCountdown(!isCountdown);
     setSeconds(!isCountdown ? 60 : 0);
   };
@@ -42,9 +52,9 @@ const App = () => {
     <div className="app">
       <SecondsCounter seconds={seconds} />
       <div className="controls">
-        <button onClick={handleStart}>▶️ Start</button>
-        <button onClick={handleStop}>⏸️ Stop</button>
-        <button onClick={handleReset}>🔁 Reset</button>
+        <button onClick={startCounter} disabled={isRunning}>▶️ Start</button>
+        <button onClick={stopCounter} disabled={!isRunning}>⏸️ Stop</button>
+        <button onClick={resetCounter}>🔁 Reset</button>
         <button onClick={toggleMode}>
           {isCountdown ? "Switch to Count Up" : "Switch to Countdown"}
         </button>
@@ -55,3 +65,4 @@ const App = () => {
 
 const root = ReactDOM.createRoot(document.getElementById("app"));
 root.render(<App />);
+
