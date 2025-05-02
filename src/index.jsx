@@ -1,68 +1,83 @@
-import React, { useState } from "react";
+import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import SecondsCounter from "./components/SecondsCounter.jsx";
 
-let timer = null;
-
-const App = () => {
-  const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isCountdown, setIsCountdown] = useState(false);
-
-  const startCounter = () => {
-    if (timer) return; 
-    setIsRunning(true);
-    timer = setInterval(() => {
-      setSeconds(prev => {
-        if (isCountdown) {
-          if (prev === 0) {
-            clearInterval(timer);
-            timer = null;
-            alert("⏰ Countdown finished!");
-            setIsRunning(false);
-            return 0;
-          }
-          return prev - 1;
-        } else {
-          return prev + 1;
-        }
-      });
-    }, 1000);
-  };
-
-  const stopCounter = () => {
-    clearInterval(timer);
-    timer = null;
-    setIsRunning(false);
-  };
-
-  const resetCounter = () => {
-    stopCounter();
-    setSeconds(isCountdown ? 60 : 0);
-  };
-
-  const toggleMode = () => {
-    stopCounter();
-    setIsCountdown(!isCountdown);
-    setSeconds(!isCountdown ? 60 : 0);
-  };
-
-  return (
-    <div className="app">
-      <SecondsCounter seconds={seconds} />
-      <div className="controls">
-        <button onClick={startCounter} disabled={isRunning}>▶️ Start</button>
-        <button onClick={stopCounter} disabled={!isRunning}>⏸️ Stop</button>
-        <button onClick={resetCounter}>🔁 Reset</button>
-        <button onClick={toggleMode}>
-          {isCountdown ? "Switch to Count Up" : "Switch to Countdown"}
-        </button>
-      </div>
-    </div>
-  );
-};
+let counter = 0;
+let interval = null;
+let countdown = false;
+let targetTime = null;
 
 const root = ReactDOM.createRoot(document.getElementById("app"));
-root.render(<App />);
+
+function renderCounter() {
+    root.render(
+        <div>
+            <SecondsCounter seconds={counter} />
+            <div className="controls">
+                <button onClick={start}>▶️ Start</button>
+                <button onClick={stop}>⏸️ Stop</button>
+                <button onClick={reset}>🔁 Reset</button>
+                <button onClick={setCountdown}>⏬ Countdown</button>
+                <input type="number" id="countInput" placeholder="Countdown from..." />
+                <input type="number" id="alertInput" placeholder="Alert at..." />
+            </div>
+        </div>
+    );
+}
+
+function start() {
+    if (interval) return;
+    interval = setInterval(() => {
+        if (countdown) {
+            counter--;
+            if (counter < 0) {
+                stop();
+                alert("Countdown finished!");
+                return;
+            }
+        } else {
+            counter++;
+        }
+
+        if (targetTime !== null && counter === targetTime) {
+            alert(`⏰ Reached target time: ${targetTime} seconds!`);
+        }
+
+        renderCounter();
+    }, 1000);
+}
+
+function stop() {
+    clearInterval(interval);
+    interval = null;
+}
+
+function reset() {
+    stop();
+    counter = 0;
+    countdown = false;
+    targetTime = null;
+    renderCounter();
+}
+
+function setCountdown() {
+    const input = document.getElementById("countInput").value;
+    const alertInput = document.getElementById("alertInput").value;
+    const countValue = parseInt(input);
+    const alertValue = parseInt(alertInput);
+
+    if (!isNaN(countValue)) {
+        counter = countValue;
+        countdown = true;
+    }
+
+    if (!isNaN(alertValue)) {
+        targetTime = alertValue;
+    }
+
+    renderCounter();
+}
+
+renderCounter();
 
